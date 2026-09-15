@@ -1,0 +1,11 @@
+# Build output
+/bin/
+/bin-int/
+
+# Generated files/direcotires
+.vs/
+*.sln
+*.slnx
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
