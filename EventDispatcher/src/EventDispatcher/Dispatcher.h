@@ -38,11 +38,11 @@ public:
 		eventList.push_back(event);
 	}
 
-	void ExecuteQueuedEvents()
+	void ExecuteQueuedEvents(std::function<void(Event&)> eventHandler)
 	{
 		for each(Event* event in eventList)
 		{
-			//Execute all queued events
+			eventHandler(*event);
 
 			delete event;
 		}
