@@ -23,9 +23,9 @@ public:
 	virtual const char* GetName() const = 0;
 	virtual std::string ToString() const { return GetName(); } // While using `std::string` can result in the allocation for memory, the 'ToString()' method is only used for debugging purposes, and should not be invoked in regular runs.
 
+	virtual ~Event() = default;
 protected:
 	Event();
 	Event& operator=(Event&);
 	Event(const Event&);
-	virtual ~Event() = default;
 };
