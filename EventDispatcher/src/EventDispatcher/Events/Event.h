@@ -25,7 +25,7 @@ public:
 
 	virtual ~Event() = default;
 protected:
-	Event();
+	Event() = default;
 	Event& operator=(Event&);
 	Event(const Event&);
 };
