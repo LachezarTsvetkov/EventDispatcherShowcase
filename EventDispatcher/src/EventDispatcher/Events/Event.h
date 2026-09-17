@@ -7,7 +7,8 @@ enum class EventType
 	None,
 	MouseButtonPressed, MouseButtonReleased, MouseButtonClicked, MouseMoved, MouseScrolled,
 	KeyPressed, KeyReleased, 
-	WindowClosed, WindowResized, 
+	WindowClosed, WindowResized,
+	Custom,
 };
 
 #define EVENT_CLASS_TYPE(type)\

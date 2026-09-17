@@ -12,6 +12,9 @@ public:
 	template<typename T>
 	bool DispatchEvent(EventFn<T> func)
 	{
+		assert(func && "Cannot dispatch to an empty std::function!");
+		if (m_Event.Handled) return false;
+
 		if (m_Event.GetEventType() == T::GetStaticType())
 		{
 			m_Event.Handled |= func(static_cast<T&>(m_Event));
@@ -26,28 +29,25 @@ protected:
 class EventQueue
 {
 public:
-	~EventQueue() {
-		for each(Event* event in eventList)
-		{
-			delete event;
-		}
-	}
+	~EventQueue() = default;
 
-	void QueueEvent(Event* event)
+	void QueueEvent(std::unique_ptr<Event> event)
 	{
-		eventList.push_back(event);
+		assert(event != nullptr && "Cannot queue a null event pointer!");
+		eventList.push_back(std::move(event));
 	}
 
 	void ExecuteQueuedEvents(std::function<void(Event&)> eventHandler)
 	{
-		for each(Event* event in eventList)
+		std::vector<std::unique_ptr<Event>> currentFrameEvents;
+		currentFrameEvents.swap(eventList);
+
+		for (auto& event : currentFrameEvents)
 		{
 			eventHandler(*event);
-
-			delete event;
 		}
-		eventList.clear();
+		//currentFrameEvents.clear(); //Not needed, as the object's lifespan ends here
 	}
 protected:
-	std::vector<Event*> eventList;
+	std::vector<std::unique_ptr<Event>> eventList;
 };

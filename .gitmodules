@@ -1,0 +1,3 @@
+[submodule "EventDispatcher/vendor/googletest"]
+	path = EventDispatcher/vendor/googletest
+	url = https://github.com/google/googletest

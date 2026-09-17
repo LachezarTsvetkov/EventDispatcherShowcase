@@ -7,3 +7,5 @@
 #include <functional>
 #include <sstream>
 #include <string_view>
+
+#include <cassert>

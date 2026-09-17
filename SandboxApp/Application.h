@@ -1,9 +1,9 @@
 #pragma once
-#include "src/EventDispatcher/Events/Event.h"
-#include "src/EventDispatcher/Dispatcher.h"
-#include "src/EventDispatcher/Events/WindowEvent.h"
-#include "src/EventDispatcher/Events/MouseEvent.h"
-#include "src/EventDispatcher/Events/KeyEvent.h"
+#include "EventDispatcher/Events/Event.h"
+#include "EventDispatcher/Dispatcher.h"
+#include "EventDispatcher/Events/WindowEvent.h"
+#include "EventDispatcher/Events/MouseEvent.h"
+#include "EventDispatcher/Events/KeyEvent.h"
 
 class Application
 {
