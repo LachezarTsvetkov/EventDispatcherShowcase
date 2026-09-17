@@ -5,6 +5,15 @@
 
 #define BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 
+class NestedEvents : public Event
+{
+public:
+
+protected:
+	NestedEvents() {}
+	EVENT_CLASS_TYPE(Custom);
+};
+
 class DispatcherTestFixture : public testing::Test
 {
 protected:

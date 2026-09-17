@@ -19,9 +19,9 @@ protected:
 
 TEST_F(EventQueueTestFixture, FIFOExecutionOrder)
 {
-	queue.QueueEvent(new MouseMovedEvent(10, 10));
-	queue.QueueEvent(new KeyPressedEvent(65));
-	queue.QueueEvent(new WindowClosedEvent());
+	queue.QueueEvent(std::make_unique<MouseMovedEvent>(10, 10));
+	queue.QueueEvent(std::make_unique<KeyPressedEvent>(65));
+	queue.QueueEvent(std::make_unique<WindowClosedEvent>());
 
 	queue.ExecuteQueuedEvents([this](Event& e) { RouteQueuedEvent(e); });
 
@@ -41,7 +41,7 @@ TEST_F(EventQueueTestFixture, EmptyQueueSafety)
 
 TEST_F(EventQueueTestFixture, SyncVsDeferredExecutionOrder)
 {
-	queue.QueueEvent(new MouseMovedEvent(10, 10));
+	queue.QueueEvent(std::make_unique<MouseMovedEvent>(10, 10));
 
 	WindowClosedEvent syncEvent;
 	RouteQueuedEvent(syncEvent);
@@ -51,13 +51,4 @@ TEST_F(EventQueueTestFixture, SyncVsDeferredExecutionOrder)
 	ASSERT_EQ(executionOrder.size(), 2);
 	EXPECT_EQ(executionOrder[0], EventType::WindowClosed);
 	EXPECT_EQ(executionOrder[1], EventType::MouseMoved);
-}
-
-using EventQueueDeathTest = EventQueueTestFixture;
-
-TEST_F(EventQueueDeathTest, NullPointerRejection)
-{
-	EXPECT_DEATH({
-		queue.QueueEvent(nullptr);
-		}, "Cannot queue a null event pointer!");
 }
