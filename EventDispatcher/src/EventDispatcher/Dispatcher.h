@@ -35,6 +35,7 @@ public:
 
 	void QueueEvent(Event* event)
 	{
+		assert(event != nullptr && "Cannot queue a null event pointer!");
 		eventList.push_back(event);
 	}
 
