@@ -19,9 +19,9 @@ protected:
 
 TEST_F(EventQueueTestFixture, FIFOExecutionOrder)
 {
-	queue.QueueEvent(std::make_unique<MouseMovedEvent>(10, 10));
-	queue.QueueEvent(std::make_unique<KeyPressedEvent>(65));
-	queue.QueueEvent(std::make_unique<WindowClosedEvent>());
+	queue.QueueEvent<MouseMovedEvent>(10, 10);
+	queue.QueueEvent<KeyPressedEvent>(65);
+	queue.QueueEvent<WindowClosedEvent>();
 
 	queue.ExecuteQueuedEvents([this](Event& e) { RouteQueuedEvent(e); });
 
@@ -41,7 +41,7 @@ TEST_F(EventQueueTestFixture, EmptyQueueSafety)
 
 TEST_F(EventQueueTestFixture, SyncVsDeferredExecutionOrder)
 {
-	queue.QueueEvent(std::make_unique<MouseMovedEvent>(10, 10));
+	queue.QueueEvent<MouseMovedEvent>(10, 10);
 
 	WindowClosedEvent syncEvent;
 	RouteQueuedEvent(syncEvent);
