@@ -30,7 +30,7 @@ void Application::Run()
 		if (frameCnt == 20)
 		{
 			std::cout << "Sending synchronous and deferred events to the Application instance" << std::endl;
-			eventQueue.QueueEvent(std::make_unique<MouseScrolledEvent>(10, 20, true));
+			eventQueue.QueueEvent<MouseScrolledEvent>(10, 20, true);
 
 			MouseMovedEvent e(300, 400);
 			OnEvent(e);
@@ -38,7 +38,7 @@ void Application::Run()
 			MouseButtonClickedEvent e2 (1, 2, 3);
 			OnEvent(e2);
 
-			eventQueue.QueueEvent(std::make_unique<WindowClosedEvent>());
+			eventQueue.QueueEvent<WindowClosedEvent>();
 		}
 
 		eventQueue.ExecuteQueuedEvents([this](Event& e) {

@@ -58,14 +58,14 @@ protected:
 
 TEST_F(AdvancedQueueTest, IteratorInvalidationReentrancy)
 {
-	queue.QueueEvent(std::make_unique<WindowClosedEvent>());
+	queue.QueueEvent<WindowClosedEvent>();
 
 	queue.ExecuteQueuedEvents([this](Event& e) {
 		processedEvents++;
 
 		// Simulate a listener queuing a new event while in the middle of the execute loop
 		if (e.GetEventType() == EventType::WindowClosed) {
-			queue.QueueEvent(std::make_unique<MouseMovedEvent>(0, 0));
+			queue.QueueEvent<MouseMovedEvent>(0, 0);
 		}
 		});
 
@@ -85,7 +85,7 @@ TEST_F(AdvancedQueueTest, HighVolumeStressTest)
 
 	for (int i = 0; i < EVENT_COUNT; i++)
 	{
-		queue.QueueEvent(std::make_unique<MouseMovedEvent>(i, i));
+		queue.QueueEvent<MouseMovedEvent>(i, i);
 	}
 
 	WindowClosedEvent syncEvent;
@@ -106,9 +106,12 @@ TEST_F(AdvancedQueueTest, HighVolumeStressTest)
 
 using QueueDeathTest = AdvancedQueueTest;
 
-TEST_F(QueueDeathTest, NullPointerRejection)
+TEST_F(QueueDeathTest, AllocatorOutOfMemoryRejection)
 {
+	// Initialize a queue with a tiny 8-byte capacity for its allocators
+	EventQueue tinyQueue(8);
+
 	EXPECT_DEATH({
-		queue.QueueEvent(nullptr);
-		}, "Cannot queue a null event pointer!");
+		tinyQueue.QueueEvent<MouseMovedEvent>(150, 250);
+		}, "Allocation exceeds buffer size! Increase capacity.");
 }
