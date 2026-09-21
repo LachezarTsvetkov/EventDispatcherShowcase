@@ -3,6 +3,7 @@
 #include "EventDispatcher/Events/WindowEvent.h"
 #include "EventDispatcher/Events/MouseEvent.h"
 #include "EventDispatcher/Events/KeyEvent.h"
+#include "MemoryProfiler.h"
 
 class EventQueueTestFixture : public testing::Test
 {
@@ -51,4 +52,27 @@ TEST_F(EventQueueTestFixture, SyncVsDeferredExecutionOrder)
 	ASSERT_EQ(executionOrder.size(), 2);
 	EXPECT_EQ(executionOrder[0], EventType::WindowClosed);
 	EXPECT_EQ(executionOrder[1], EventType::MouseMoved);
+}
+
+
+TEST_F(EventQueueTestFixture, ZeroHeapAllocationDuringFrame)
+{
+	// Allocate the 2MB buffer here before taking a snapshot of the memory state
+	EventQueue memoryQueue;
+
+	uint32_t allocationsBefore = s_Metrics.TotalAllocated;
+
+	memoryQueue.QueueEvent<MouseMovedEvent>(10, 10);
+	memoryQueue.QueueEvent<KeyPressedEvent>(65);
+	memoryQueue.QueueEvent<WindowClosedEvent>();
+
+	memoryQueue.ExecuteQueuedEvents([](Event& e) {
+		// We do not perform any heap allocations in this callback, as all events are allocated in the pre-allocated buffer.
+	});
+
+	uint32_t allocationsAfter = s_Metrics.TotalAllocated;
+	uint32_t heapAllocationsDuringFrame = allocationsAfter - allocationsBefore;
+
+	// Ensure the engine bypassed the OS heap
+	EXPECT_EQ(heapAllocationsDuringFrame, 0);
 }

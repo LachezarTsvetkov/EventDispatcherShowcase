@@ -30,9 +30,12 @@ protected:
 class EventQueue
 {
 public:
-	EventQueue(size_t bufferSizeBytes = 2 * 1024 * 1024)
+	EventQueue(size_t bufferSizeBytes = 2 * 1024 * 1024, size_t maxEventsPerFrame = 1000)
 		: m_Allocators{ LinearAllocator(bufferSizeBytes), LinearAllocator(bufferSizeBytes) }
-	{}
+	{
+		m_Buffers[0].reserve(maxEventsPerFrame);
+		m_Buffers[1].reserve(maxEventsPerFrame);
+	}
 
 	~EventQueue() = default;
 
