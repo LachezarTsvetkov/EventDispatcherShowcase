@@ -12,7 +12,7 @@ A standalone C++ Event Dispatcher, designed to be thread-safe, and potentially b
 - [✅] Phase 1: Core Event Class and Synchronous Dispatcher 
 - [✅] Phase 2: Unit Test Setup
 - [✅] Phase 3: Double Buffered Queue
-- [] Phase 4: Custom Memory Allocator
+- [🚢] Phase 4: Custom Memory Allocator
 - [] Phase 5: Thread-Safety Tests
 
 ## System Architecture
