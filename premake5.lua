@@ -58,6 +58,7 @@ project "EventDispatcher"
 		defines "ED_RELEASE"
 		symbols "Off"
 		buildoptions { "/utf-8" }
+		optimize "Speed"
 
 project "SandboxApp"
 	location "SandboxApp"
@@ -92,6 +93,7 @@ project "SandboxApp"
 	filter "configurations:Release"
 		defines "ED_RELEASE"
 		symbols "Off"
+		optimize "Speed"
 
 project "UnitTests"
 	location "UnitTests"
@@ -139,6 +141,7 @@ project "UnitTests"
 	filter "configurations:Release"
 		defines "ED_RELEASE"
 		symbols "Off"
+		optimize "Speed"
 
 
 project "GoogleTest"
@@ -171,3 +174,4 @@ files
 	filter "configurations:Release"
 		defines "GTEST_RELEASE"
 		symbols "Off"
+		optimize "Speed"

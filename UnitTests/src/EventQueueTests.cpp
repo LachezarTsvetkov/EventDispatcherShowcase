@@ -76,3 +76,96 @@ TEST_F(EventQueueTestFixture, ZeroHeapAllocationDuringFrame)
 	// Ensure the engine bypassed the OS heap
 	EXPECT_EQ(heapAllocationsDuringFrame, 0);
 }
+
+
+TEST_F(EventQueueTestFixture, MultithreadedConcurrencyTest)
+{
+	const int THREAD_COUNT = 4;
+	const int EVENTS_PER_THREAD = 2500;
+	const int TOTAL_EVENTS = THREAD_COUNT * EVENTS_PER_THREAD;
+
+	EventQueue concurrentQueue(5 * 1024 * 1024, TOTAL_EVENTS);
+	std::vector<std::thread> workers;
+
+	// Spawn 4 parallel threads that instantly start firing events into the queue
+	for (int i = 0; i < THREAD_COUNT; i++)
+	{
+		workers.emplace_back([&concurrentQueue, EVENTS_PER_THREAD]() {
+			for (int j = 0; j < EVENTS_PER_THREAD; j++)
+			{
+				concurrentQueue.QueueEvent<MouseMovedEvent>(j, j);
+			}
+			});
+	}
+
+	// Join the threads to wait for all background queuing to finish
+	for (auto& worker : workers)
+	{
+		worker.join();
+	}
+
+	// Process the frame and count the results
+	int processedCount = 0;
+	concurrentQueue.ExecuteQueuedEvents([&processedCount](Event& e) {
+		processedCount++;
+		});
+
+
+	EXPECT_EQ(processedCount, TOTAL_EVENTS);
+} 
+
+
+using EventQueueDeathTest = EventQueueTestFixture;
+
+TEST_F(EventQueueDeathTest, BackgroundExecutionRejection)
+{
+	EventQueue mainThreadQueue;
+	mainThreadQueue.QueueEvent<WindowClosedEvent>();
+
+	EXPECT_DEATH({
+		std::thread illegalWorker([&mainThreadQueue]() {
+			mainThreadQueue.ExecuteQueuedEvents([](Event& e) {});
+		});
+		illegalWorker.join();
+		}, "Only the main thread can execute events!");
+}
+
+TEST_F(EventQueueTestFixture, ConcurrentProduceAndConsumeStress)
+{
+	const int THREAD_COUNT = 3;
+	const int EVENTS_PER_THREAD = 500;
+	const int TOTAL_EXPECTED = THREAD_COUNT * EVENTS_PER_THREAD;
+
+	EventQueue concurrentQueue(10 * 1024 * 1024, TOTAL_EXPECTED);
+	std::atomic<int> totalProcessed = 0;
+
+	std::atomic<int> completedProducers = 0;
+
+	std::vector<std::thread> workers;
+
+	for (int i = 0; i < THREAD_COUNT; i++)
+	{
+		workers.emplace_back([&concurrentQueue, EVENTS_PER_THREAD, &completedProducers]() {
+			for (int j = 0; j < EVENTS_PER_THREAD; j++)
+			{
+				concurrentQueue.QueueEvent<MouseMovedEvent>(j, j);
+				std::this_thread::sleep_for(std::chrono::microseconds(1));
+			}
+			completedProducers++;
+			});
+	}
+
+	while (completedProducers < THREAD_COUNT || totalProcessed < TOTAL_EXPECTED)
+	{
+		concurrentQueue.ExecuteQueuedEvents([&totalProcessed](Event& e) {
+			totalProcessed++;
+			});
+	}
+
+	for (auto& worker : workers)
+	{
+		if (worker.joinable()) worker.join();
+	}
+
+	EXPECT_EQ(totalProcessed.load(), TOTAL_EXPECTED);
+}

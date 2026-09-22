@@ -35,6 +35,8 @@ public:
 	{
 		m_Buffers[0].reserve(maxEventsPerFrame);
 		m_Buffers[1].reserve(maxEventsPerFrame);
+		//We need to ensure that the ExecuteQueuedEvents is only executed on the main thread, as it's not thread safe to ensure performance and stability
+		m_MainThreadId = std::this_thread::get_id();
 	}
 
 	~EventQueue() = default;
@@ -42,6 +44,7 @@ public:
 	template<typename T, typename... Args>
 	void QueueEvent(Args&&... args)
 	{
+		std::lock_guard<std::mutex> lock(m_QueueMutex);
 		LinearAllocator& writeAllocator = m_Allocators[m_WriteIndex];
 
 		// Construct the event in the active write buffer using the custom allocator;l
@@ -54,9 +57,16 @@ public:
 
 	void ExecuteQueuedEvents(std::function<void(Event&)> eventHandler)
 	{
+		assert(std::this_thread::get_id() == m_MainThreadId && "Only the main thread can execute events!");
 		int readIndex = m_WriteIndex;
-		// O(1) memory swap, where we switch the write buffer to the other index in an extremely performant manner.
-		m_WriteIndex = (m_WriteIndex + 1) % 2;
+
+		// We need to lock the queue mutex here to ensure that we safely swap the write buffer index without any race conditions, as other threads may still be queuing events.
+		{
+			std::lock_guard<std::mutex> lock(m_QueueMutex);
+			readIndex = m_WriteIndex;
+			// O(1) memory swap, where we switch the write buffer to the other index in an extremely performant manner.
+			m_WriteIndex = (m_WriteIndex + 1) % 2;
+		}
 
 		for (auto& event : m_Buffers[readIndex])
 		{
@@ -68,7 +78,9 @@ public:
 		m_Allocators[readIndex].Reset();
 	}
 protected:
-	std::array<std::vector<EventPtr>, 2> m_Buffers;
 	std::array<LinearAllocator, 2> m_Allocators;
+	std::array<std::vector<EventPtr>, 2> m_Buffers;
 	int m_WriteIndex = 0;
+	std::mutex m_QueueMutex;
+	std::thread::id m_MainThreadId;
 };
