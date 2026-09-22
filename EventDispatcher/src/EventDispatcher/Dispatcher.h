@@ -78,8 +78,8 @@ public:
 		m_Allocators[readIndex].Reset();
 	}
 protected:
-	std::array<std::vector<EventPtr>, 2> m_Buffers;
 	std::array<LinearAllocator, 2> m_Allocators;
+	std::array<std::vector<EventPtr>, 2> m_Buffers;
 	int m_WriteIndex = 0;
 	std::mutex m_QueueMutex;
 	std::thread::id m_MainThreadId;
