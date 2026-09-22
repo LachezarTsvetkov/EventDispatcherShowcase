@@ -76,3 +76,40 @@ TEST_F(EventQueueTestFixture, ZeroHeapAllocationDuringFrame)
 	// Ensure the engine bypassed the OS heap
 	EXPECT_EQ(heapAllocationsDuringFrame, 0);
 }
+
+
+TEST_F(EventQueueTestFixture, MultithreadedConcurrencyTest)
+{
+	const int THREAD_COUNT = 4;
+	const int EVENTS_PER_THREAD = 2500;
+	const int TOTAL_EVENTS = THREAD_COUNT * EVENTS_PER_THREAD;
+
+	EventQueue concurrentQueue(5 * 1024 * 1024, TOTAL_EVENTS);
+	std::vector<std::thread> workers;
+
+	// Spawn 4 parallel threads that instantly start firing events into the queue
+	for (int i = 0; i < THREAD_COUNT; i++)
+	{
+		workers.emplace_back([&concurrentQueue, EVENTS_PER_THREAD]() {
+			for (int j = 0; j < EVENTS_PER_THREAD; j++)
+			{
+				concurrentQueue.QueueEvent<MouseMovedEvent>(j, j);
+			}
+			});
+	}
+
+	// Join the threads to wait for all background queuing to finish
+	for (auto& worker : workers)
+	{
+		worker.join();
+	}
+
+	// Process the frame and count the results
+	int processedCount = 0;
+	concurrentQueue.ExecuteQueuedEvents([&processedCount](Event& e) {
+		processedCount++;
+		});
+
+
+	EXPECT_EQ(processedCount, TOTAL_EVENTS);
+} 

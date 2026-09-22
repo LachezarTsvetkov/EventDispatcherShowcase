@@ -42,6 +42,7 @@ public:
 	template<typename T, typename... Args>
 	void QueueEvent(Args&&... args)
 	{
+		std::lock_guard<std::mutex> lock(m_QueueMutex);
 		LinearAllocator& writeAllocator = m_Allocators[m_WriteIndex];
 
 		// Construct the event in the active write buffer using the custom allocator;l
@@ -55,8 +56,12 @@ public:
 	void ExecuteQueuedEvents(std::function<void(Event&)> eventHandler)
 	{
 		int readIndex = m_WriteIndex;
-		// O(1) memory swap, where we switch the write buffer to the other index in an extremely performant manner.
-		m_WriteIndex = (m_WriteIndex + 1) % 2;
+		{
+			std::lock_guard<std::mutex> lock(m_QueueMutex);
+			readIndex = m_WriteIndex;
+			// O(1) memory swap, where we switch the write buffer to the other index in an extremely performant manner.
+			m_WriteIndex = (m_WriteIndex + 1) % 2;
+		}
 
 		for (auto& event : m_Buffers[readIndex])
 		{
@@ -71,4 +76,5 @@ protected:
 	std::array<std::vector<EventPtr>, 2> m_Buffers;
 	std::array<LinearAllocator, 2> m_Allocators;
 	int m_WriteIndex = 0;
+	std::mutex m_QueueMutex;
 };
